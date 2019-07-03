@@ -1,7 +1,9 @@
 local packet = {}
 
-local inspect = require 'inspect'
 local utils = require 'broadcaster.utils'
+
+local logger = require 'log'
+local inspect = require 'inspect'
 
 packet.PACKETS_ID = {
     START_TRANSFER = 1,
@@ -104,19 +106,19 @@ end
 --    bin <table> - binary sequence
 function packet.DataPacket.unpack(bin)
     local packetId = utils.binToDec({unpack(bin, 1, 3)})
-    print('debug >> packet.lua:data > packet id: ' .. packetId)
+    logger.debug('data packet > packet id: ' .. packetId)
     local sessionId = utils.binToDec({unpack(bin, 4, 7)})
-    print('debug >> packet.lua:data > session id: ' .. sessionId)
+    logger.debug('data packet > session id: ' .. sessionId)
     local parityBit = bin[8]
-    print('debug >> packet.lua:data > parity bit:' .. parityBit)
+    logger.debug('data packet > parity bit:' .. parityBit)
     local data = utils.binToDec({unpack(bin, 9, 16)})
-    print('debug >> packet.lua:data > data: ' .. inspect(data))
+    logger.debug('data packet > data: ' .. inspect(data))
     
     -- TODO: pcall when calling unpack
     if (utils.getParity(data) and 1 or 0) ~= parityBit then
-        print('got parity bit: ' .. parityBit)
-        print('actual parity bit: ' .. (utils.getParity(data) and 1 or 0))
-        error('corrupted packet: parity bits do not match')
+        logger.error('got parity bit: ' .. parityBit)
+        logger.error('actual parity bit: ' .. (utils.getParity(data) and 1 or 0))
+        error('corrupted data packet: parity bits do not match')
     end
     
     return packet.DataPacket(data, sessionId)
@@ -162,7 +164,9 @@ function packet.HandlerIdPacket.unpack(bin)
     
     -- TODO: pcall when calling unpack
     if (utils.getParity(handlerId) and 1 or 0) ~= parityBit then
-        error('corrupted packet: parity bits do not match')
+        logger.error('got parity bit: ' .. parityBit)
+        logger.error('actual parity bit: ' .. (utils.getParity(handlerId) and 1 or 0))
+        error('corrupted handler id packet: parity bits do not match')
     end
     
     return packet.HandlerIdPacket(handlerId, sessionId)
