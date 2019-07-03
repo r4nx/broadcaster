@@ -4,9 +4,9 @@ local handlers = {}
 local proto = require 'broadcaster.proto'
 local encoder = require 'broadcaster.encoder'
 local charset = require 'broadcaster.charset'
-local utils = require 'broadcaster.utils'
 local magic = require 'broadcaster.magic'
 local utf8 = require 'lua-utf8'
+
 local inspect = require 'inspect'
 
 -- Args:
