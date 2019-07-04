@@ -96,7 +96,7 @@ local function sessionHandler(session)
     logger.trace('>> broadcaster.lua:sessionHandler')
     local handlerId = encoder.decode(session.handlerId, charset.MESSAGE_DECODE)
     logger.debug(('got handler id: "%s"'):format(handlerId))
-    local handler, rawData = unpack(handlers[handlerId])
+    local handler, rawData = unpack(handlers[handlerId] or {})
     if handler ~= nil then
         if rawData then
             handler(session.data)
