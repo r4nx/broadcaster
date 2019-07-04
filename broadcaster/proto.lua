@@ -14,6 +14,7 @@ local sessions = {}
 --      (session is passed as first argument to callback)
 function proto.processPacket(bin, callback)
     logger.trace('>> processPacket')
+    proto.collectOldSessions()
     local packetCode = utils.binToDec({unpack(bin, 1, 3)})
     logger.debug('packet code: ' .. packetCode)
 
@@ -112,6 +113,15 @@ function proto.sendData(data, handlerId)
     packets[#packets + 1] = packet.StopTransferPacket(sessionId):pack()
 
     return packets
+end
+
+function proto.collectOldSessions()
+    for sessionId, sess in pairs(sessions) do
+        if os.time() - sess.lastUpdate > 30 then
+            sessions[sessionId] = nil
+            logger.debug('collected old session ' .. sessionId)
+        end
+    end
 end
 
 function proto.getSessions()
