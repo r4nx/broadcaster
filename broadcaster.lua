@@ -5,6 +5,7 @@ logger.usecolor = false
 logger.level = 'debug'
 
 local proto = require 'broadcaster.proto'
+local utils = require 'broadcaster.utils'
 local encoder = require 'broadcaster.encoder'
 local charset = require 'broadcaster.charset'
 local magic = require 'broadcaster.magic'
@@ -104,7 +105,7 @@ local function sessionHandler(session)
 end
 
 local function rpcHandler(rpcId, bs)
-    if rpcId == magic.RPC_IN then
+    if rpcId == magic.RPC_IN and utils.tableLength(handlers) > 0 then
         raknetBitStreamResetReadPointer(bs)
 
         local bits = bitStreamToBits(bs)
