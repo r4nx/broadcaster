@@ -32,13 +32,16 @@ function proto.processPacket(bin, callback)
         end,
         [packet.PACKETS_ID.DATA] = function()
             logger.debug('data packet identified')
-            -- TODO: pcall
-            local dataPacket = packet.DataPacket.unpack(bin)
-            local sessionId = dataPacket.sessionId
+            local result, returned = pcall(packet.DataPacket.unpack, bin)
+            if not result then
+                logger.warn('failed to unpack:\n' .. returned)
+                return
+            end
+            local sessionId = returned.sessionId
 
             local sess = sessions[sessionId]
             if sess ~= nil then
-                sess:appendData(dataPacket.data)
+                sess:appendData(returned.data)
             else
                 -- TODO: remove this
                 logger.warn('cannot found session for data packet: ' .. sessionId)
@@ -47,12 +50,16 @@ function proto.processPacket(bin, callback)
         end,
         [packet.PACKETS_ID.HANDLER_ID] = function()
             logger.debug('handler id packet identified')
-            local handlerIdPacket = packet.HandlerIdPacket.unpack(bin)
-            local sessionId = handlerIdPacket.sessionId
+            local result, returned = pcall(packet.HandlerIdPacket.unpack, bin)
+            if not result then
+                logger.warn('failed to unpack:\n' .. returned)
+                return
+            end
+            local sessionId = returned.sessionId
             
             local sess = sessions[sessionId]
             if sess ~= nil then
-                sess:appendHandlerId(handlerIdPacket.handlerId)
+                sess:appendHandlerId(returned.handlerId)
             else
                 -- TODO: remove this
                 logger.warn('cannot found session for handler id packet: ' .. sessionId)
