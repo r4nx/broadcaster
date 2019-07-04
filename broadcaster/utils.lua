@@ -49,6 +49,8 @@ end
 
 -- Args:
 --    dec <number>
+-- Returns:
+--    bool
 function utils.getParity(n)
     local parity = false
     while n > 0 do
@@ -58,10 +60,12 @@ function utils.getParity(n)
     return parity
 end
 
--- Pads binary sequence with leading zeros, also trim it if it is too big
+-- Pads binary sequence with leading zeros, also trim it if it is too long
 -- Args:
 --    bin <table> - binary sequence
 --    bits <number> - padding (negative padding - pad with ending zeros)
+-- Returns:
+--    Binary sequence
 function utils.padBinary(bin, bits)
     local padded = bin
     if #padded > math.abs(bits) then

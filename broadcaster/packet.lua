@@ -23,6 +23,8 @@ setmetatable(packet.StartTransferPacket, {
     end
 })
 
+-- Args:
+--    sessionId <number> (decimal)
 function packet.StartTransferPacket:_init(sessionId)
     self.sessionId = sessionId
 end
@@ -53,6 +55,8 @@ setmetatable(packet.StopTransferPacket, {
     end
 })
 
+-- Args:
+--    sessionId <number> (decimal)
 function packet.StopTransferPacket:_init(sessionId)
     self.sessionId = sessionId
 end
@@ -85,6 +89,7 @@ setmetatable(packet.DataPacket, {
 
 -- Args:
 --    data <number> - data to transfer (1 byte in decimal number system)
+--    sessionId <number> (decimal)
 function packet.DataPacket:_init(data, sessionId)
     if select(2, math.frexp(data)) > 8 then
         error('data is too large: only 1 byte allowed')
@@ -102,8 +107,6 @@ function packet.DataPacket:pack()
     return utils.padBinary(utils.tablesConcat(packetId, sessionId, parityBit, data), -16)
 end
 
--- Args:
---    bin <table> - binary sequence
 function packet.DataPacket.unpack(bin)
     local packetId = utils.binToDec({unpack(bin, 1, 3)})
     logger.debug('data packet > packet id: ' .. packetId)
@@ -113,13 +116,13 @@ function packet.DataPacket.unpack(bin)
     logger.debug('data packet > parity bit:' .. parityBit)
     local data = utils.binToDec({unpack(bin, 9, 16)})
     logger.debug('data packet > data: ' .. inspect(data))
-    
+
     if (utils.getParity(data) and 1 or 0) ~= parityBit then
         logger.warn('got parity bit: ' .. parityBit)
         logger.warn('actual parity bit: ' .. (utils.getParity(data) and 1 or 0))
         error('corrupted data packet: parity bits do not match')
     end
-    
+
     return packet.DataPacket(data, sessionId)
 end
 
@@ -138,6 +141,7 @@ setmetatable(packet.HandlerIdPacket, {
 
 -- Args:
 --    handlerId <number> - handler id, decimal, 1 byte
+--    sessionId <number> (decimal)
 function packet.HandlerIdPacket:_init(handlerId, sessionId)
     if select(2, math.frexp(handlerId)) > 8 then
         error('handlerId is too large: only 1 byte allowed')
@@ -151,7 +155,7 @@ function packet.HandlerIdPacket:pack()
     local sessionId = utils.decToBin(self.sessionId, 4)
     local parityBit = {utils.getParity(self.handlerId) and 1 or 0}
     local handlerId = utils.decToBin(self.handlerId, 8)
-    
+
     return utils.padBinary(utils.tablesConcat(packetId, sessionId, parityBit, handlerId), -16)
 end
 
@@ -160,13 +164,13 @@ function packet.HandlerIdPacket.unpack(bin)
     local sessionId = utils.binToDec({unpack(bin, 4, 7)})
     local parityBit = bin[8]
     local handlerId = utils.binToDec({unpack(bin, 9, 16)})
-    
+
     if (utils.getParity(handlerId) and 1 or 0) ~= parityBit then
         logger.warn('got parity bit: ' .. parityBit)
         logger.warn('actual parity bit: ' .. (utils.getParity(handlerId) and 1 or 0))
         error('corrupted handler id packet: parity bits do not match')
     end
-    
+
     return packet.HandlerIdPacket(handlerId, sessionId)
 end
 

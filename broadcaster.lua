@@ -1,9 +1,7 @@
---local handlers = setmetatable({}, {__mode = 'v'})
 local handlers = {}
 
 local logger = require 'log'
 logger.usecolor = false
--- logger.outfile = 'broadcaster.log'
 logger.level = 'debug'
 
 local proto = require 'broadcaster.proto'
@@ -15,7 +13,7 @@ local utf8 = require 'lua-utf8'
 local inspect = require 'inspect'
 
 -- Args:
---    handlerId <string> - unique handler ID (2 chars)
+--    handlerId <string> - unique handler id (2 chars)
 --    callback_obj <function> - callback function
 function EXPORTS.registerHandler(handlerId, callback_obj)
     -- Doing some check in advance to avoid undefined behavior
@@ -25,7 +23,7 @@ function EXPORTS.registerHandler(handlerId, callback_obj)
     if utf8.len(handlerId) ~= magic.HANDLER_ID_LEN then
         error(('handler id have to be %d character length (got "%s")'):format(magic.HANDLER_ID_LEN, handlerId))
     end
-    if handlers[handlerId] then
+    if handlers[handlerId] ~= nil then
         error(('handler id collision: handler "%s" has been already registered'):format(handlerId))
     end    
     if not callback_obj or type(callback_obj) ~= 'function' then
@@ -74,7 +72,6 @@ function EXPORTS.sendMessage(message, handlerId)
     end
 end
 
--- TODO: remove
 function EXPORTS._printHandlers()
     print('Handlers:')
     for handlerId, _ in pairs(handlers) do
@@ -109,10 +106,10 @@ end
 local function rpcHandler(rpcId, bs)
     if rpcId == magic.RPC_IN then
         raknetBitStreamResetReadPointer(bs)
-        
+
         local bits = bitStreamToBits(bs)
         logger.info(string.rep(' ', 4) .. '[^] received bits: ' .. inspect(bits))
-        
+
         if #bits == magic.PACKETS_LEN then
             proto.processPacket(bits, sessionHandler)
         else

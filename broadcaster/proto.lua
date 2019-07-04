@@ -6,11 +6,12 @@ local Session = require 'broadcaster.session'
 local inspect = require 'inspect'
 
 local logger = require 'log'
--- local sessions = setmetatable({}, {__mode = 'kv'})
 local sessions = {}
 
 -- Args:
---    bin <table> - binary values
+--    bin <table> - binary sequence
+--    callback <function> - function to call when session is finished
+--      (session is passed as first argument to callback)
 function proto.processPacket(bin, callback)
     logger.trace('>> processPacket')
     local packetCode = utils.binToDec({unpack(bin, 1, 3)})
@@ -43,7 +44,6 @@ function proto.processPacket(bin, callback)
             if sess ~= nil then
                 sess:appendData(returned.data)
             else
-                -- TODO: remove this
                 logger.warn('cannot found session for data packet: ' .. sessionId)
                 logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
@@ -56,12 +56,11 @@ function proto.processPacket(bin, callback)
                 return
             end
             local sessionId = returned.sessionId
-            
+
             local sess = sessions[sessionId]
             if sess ~= nil then
                 sess:appendHandlerId(returned.handlerId)
             else
-                -- TODO: remove this
                 logger.warn('cannot found session for handler id packet: ' .. sessionId)
                 logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
@@ -81,7 +80,6 @@ function proto.processPacket(bin, callback)
                     logger.warn('removed invalid session ' .. sessionId)
                 end
             else
-                -- TODO: remove this and join 2 ifs above
                 logger.warn('cannot found session for stop transfer packet: ' .. sessionId)
                 logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
@@ -99,7 +97,7 @@ end
 
 -- Args:
 --    data <table> - table of decimal numbers
---    handlerId <table> - encoded handlerId
+--    handlerId <table> - encoded handler id
 -- Returns:
 --    Table of binary sequences
 function proto.sendData(data, handlerId)
@@ -113,9 +111,9 @@ function proto.sendData(data, handlerId)
     for _, dataPart in ipairs(data) do
         packets[#packets + 1] = packet.DataPacket(dataPart, sessionId):pack()
     end
-    
+
     packets[#packets + 1] = packet.StopTransferPacket(sessionId):pack()
-    
+
     return packets
 end
 
