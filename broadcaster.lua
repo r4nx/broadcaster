@@ -14,8 +14,9 @@ local inspect = require 'inspect'
 
 -- Args:
 --    handlerId <string> - unique handler id
---    callback_obj <function> - callback function
-function EXPORTS.registerHandler(handlerId, callback_obj)
+--    callback <function> - callback function
+--    rawData <bool> [optional] - do not decode data before passing to callback
+function EXPORTS.registerHandler(handlerId, callback, rawData)
     -- Doing some check in advance to avoid undefined behavior
     if type(handlerId) ~= 'string' or not encoder.check(handlerId, charset.MESSAGE_ENCODE) then
         error(('invalid handler id ("%s")'):format(handlerId))
@@ -23,11 +24,11 @@ function EXPORTS.registerHandler(handlerId, callback_obj)
     if handlers[handlerId] ~= nil then
         error(('handler id collision: handler "%s" has been already registered'):format(handlerId))
     end    
-    if not callback_obj or type(callback_obj) ~= 'function' then
+    if type(callback) ~= 'function' then
         error(('callback object is not a function (handler id "%s")'):format(handlerId))
     end
 
-    handlers[handlerId] = callback_obj
+    handlers[handlerId] = {callback, rawData}
     logger.info(('Registered handler "%s"'):format(handlerId))
 end
 
@@ -68,8 +69,8 @@ end
 
 function EXPORTS._printHandlers()
     print('Handlers:')
-    for handlerId, _ in pairs(handlers) do
-        print(handlerId)
+    for handlerId, handlerData in pairs(handlers) do
+        print(handlerId, inspect(handlerData))
     end
 end
 
@@ -89,9 +90,13 @@ local function sessionHandler(session)
     logger.trace('>> broadcaster.lua:sessionHandler')
     local handlerId = encoder.decode(session.handlerId, charset.MESSAGE_DECODE)
     logger.debug(('got handler id: "%s"'):format(handlerId))
-    local handler = handlers[handlerId]
+    local handler, rawData = unpack(handlers[handlerId])
     if handler ~= nil then
-        handler(encoder.decode(session.data, charset.MESSAGE_DECODE))
+        if rawData then
+            handler(session.data)
+        else
+            handler(encoder.decode(session.data, charset.MESSAGE_DECODE))
+        end
     else
         logger.warn('handler not found, all handlers:\n  ' .. inspect(handlers))
     end
