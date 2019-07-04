@@ -16,7 +16,7 @@ function proto.processPacket(bin, callback)
     local packetCode = utils.binToDec({unpack(bin, 1, 3)})
     logger.debug('packet code: ' .. packetCode)
 
-    packetProcessors = switch({
+    packetProcessors = utils.switch({
         [packet.PACKETS_ID.START_TRANSFER] = function()
             logger.debug('start packet identified')
             local startPacket = packet.StartTransferPacket.unpack(bin)

@@ -83,7 +83,7 @@ function utils.padBinary(bin, bits)
     return padded
 end
 
-function switch(t)
+function utils.switch(t)
     t.case = function(self, x)
         local f = self[x] or self.default
         if f then
