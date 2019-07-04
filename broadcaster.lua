@@ -3,7 +3,7 @@ local handlers = {}
 
 local logger = require 'log'
 logger.usecolor = false
-logger.outfile = 'broadcaster.log'
+-- logger.outfile = 'broadcaster.log'
 logger.level = 'debug'
 
 local proto = require 'broadcaster.proto'
