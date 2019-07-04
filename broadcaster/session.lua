@@ -17,17 +17,15 @@ function Session:_init()
 end
 
 function Session:appendHandlerId(handlerId)
-    if #self.handlerId ~= magic.HANDLER_ID_LEN then
+    if #self.handlerId < magic.MAX_SESSION_CONTENT_LENGTH then
         self.handlerId[#self.handlerId + 1] = handlerId
     end
 end
 
 function Session:appendData(data)
-    self.data[#self.data + 1] = data
-end
-
-function Session:isValid()
-    return #self.handlerId == magic.HANDLER_ID_LEN
+    if #self.data < magic.MAX_SESSION_CONTENT_LENGTH then
+        self.data[#self.data + 1] = data
+    end
 end
 
 return Session

@@ -9,20 +9,16 @@ local utils = require 'broadcaster.utils'
 local encoder = require 'broadcaster.encoder'
 local charset = require 'broadcaster.charset'
 local magic = require 'broadcaster.magic'
-local utf8 = require 'lua-utf8'
 
 local inspect = require 'inspect'
 
 -- Args:
---    handlerId <string> - unique handler id (2 chars)
+--    handlerId <string> - unique handler id
 --    callback_obj <function> - callback function
 function EXPORTS.registerHandler(handlerId, callback_obj)
     -- Doing some check in advance to avoid undefined behavior
     if type(handlerId) ~= 'string' or not encoder.check(handlerId, charset.MESSAGE_ENCODE) then
         error(('invalid handler id ("%s")'):format(handlerId))
-    end
-    if utf8.len(handlerId) ~= magic.HANDLER_ID_LEN then
-        error(('handler id have to be %d character length (got "%s")'):format(magic.HANDLER_ID_LEN, handlerId))
     end
     if handlers[handlerId] ~= nil then
         error(('handler id collision: handler "%s" has been already registered'):format(handlerId))
@@ -45,16 +41,13 @@ end
 
 -- Args:
 --    message <string> - message to send
---    handlerId <string> - remote handler id (2 chars)
+--    handlerId <string> - remote handler id
 function EXPORTS.sendMessage(message, handlerId)
     if type(message) ~= 'string' or not encoder.check(message, charset.MESSAGE_ENCODE) then
         error(('invalid message ("%s")'):format(message))
     end
     if type(handlerId) ~= 'string' or not encoder.check(handlerId, charset.MESSAGE_ENCODE) then
         error(('invalid handler id ("%s")'):format(handlerId))
-    end
-    if utf8.len(handlerId) ~= magic.HANDLER_ID_LEN then
-        error(('handler id have to be %d character length (got "%s")'):format(magic.HANDLER_ID_LEN, handlerId))
     end
 
     local encodedMessage = encoder.encode(message, charset.MESSAGE_ENCODE)
