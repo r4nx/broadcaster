@@ -1,3 +1,9 @@
+-- This file is part of broadcaster library
+-- Licensed under MIT License
+-- Copyright (c) 2019 Ranx
+-- https://github.com/r4nx/broadcaster
+-- Version 0.0.1
+
 local handlers = {}
 
 local logger = require 'log'
