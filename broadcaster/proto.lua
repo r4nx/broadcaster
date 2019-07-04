@@ -114,11 +114,4 @@ function proto.getSessions()
     return sessions
 end
 
--- TODO: remove
-function proto.identifyPacket(packetCode)
-    for name, code in pairs(packet.PACKETS_ID) do
-        if code == packetCode then return name end
-    end
-end
-
 return proto
