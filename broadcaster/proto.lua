@@ -74,12 +74,8 @@ function proto.processPacket(bin, callback)
             local sess = sessions[sessionId]
             if sess ~= nil then
                 sessions[sessionId] = nil
-                if sess:isValid() then
-                    logger.debug(('removed session %d because stop packet received'):format(sessionId))
-                    callback(sess)
-                else
-                    logger.warn('removed invalid session ' .. sessionId)
-                end
+                logger.debug(('removed session %d because stop packet received'):format(sessionId))
+                callback(sess)
             else
                 logger.warn('cannot found session for stop transfer packet: ' .. sessionId)
                 logger.warn('sessions list:\n  ' .. inspect(sessions))
