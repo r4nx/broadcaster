@@ -26,6 +26,7 @@ function proto.processPacket(bin, callback)
             if sessions[sessionId] ~= nil then
                 sessions[sessionId] = nil
                 logger.warn(('session collision: session %d was removed'):format(sessionId))
+                return
             end
 
             sessions[sessionId] = Session()
