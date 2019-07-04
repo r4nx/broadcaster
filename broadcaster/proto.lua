@@ -73,10 +73,12 @@ function proto.processPacket(bin, callback)
 
             local sess = sessions[sessionId]
             if sess ~= nil then
+                sessions[sessionId] = nil
                 if sess:isValid() then
-                    sessions[sessionId] = nil
                     logger.debug(('removed session %d because stop packet received'):format(sessionId))
                     callback(sess)
+                else
+                    logger.warn('removed invalid session ' .. sessionId)
                 end
             else
                 -- TODO: remove this and join 2 ifs above
