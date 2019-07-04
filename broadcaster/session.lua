@@ -1,3 +1,9 @@
+-- This file is part of broadcaster library
+-- Licensed under MIT License
+-- Copyright (c) 2019 Ranx
+-- https://github.com/r4nx/broadcaster
+-- Version 0.0.1
+
 local magic = require 'broadcaster.magic'
 
 local Session = {}
@@ -14,20 +20,25 @@ setmetatable(Session, {
 function Session:_init()
     self.handlerId = {}
     self.data = {}
+    self:updateTime()
 end
 
 function Session:appendHandlerId(handlerId)
-    if #self.handlerId ~= magic.HANDLER_ID_LEN then
+    if #self.handlerId < magic.MAX_SESSION_CONTENT_LENGTH then
         self.handlerId[#self.handlerId + 1] = handlerId
     end
+    self:updateTime()
 end
 
 function Session:appendData(data)
-    self.data[#self.data + 1] = data
+    if #self.data < magic.MAX_SESSION_CONTENT_LENGTH then
+        self.data[#self.data + 1] = data
+    end
+    self:updateTime()
 end
 
-function Session:isValid()
-    return #self.handlerId == magic.HANDLER_ID_LEN
+function Session:updateTime()
+    self.lastUpdate = os.time()
 end
 
 return Session

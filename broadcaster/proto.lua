@@ -1,3 +1,9 @@
+-- This file is part of broadcaster library
+-- Licensed under MIT License
+-- Copyright (c) 2019 Ranx
+-- https://github.com/r4nx/broadcaster
+-- Version 0.0.1
+
 local proto = {}
 
 local packet = require 'broadcaster.packet'
@@ -5,75 +11,84 @@ local utils = require 'broadcaster.utils'
 local Session = require 'broadcaster.session'
 local inspect = require 'inspect'
 
--- local sessions = setmetatable({}, {__mode = 'kv'})
+local logger = require 'log'
 local sessions = {}
 
 -- Args:
---    bin <table> - binary values
+--    bin <table> - binary sequence
+--    callback <function> - function to call when session is finished
+--      (session is passed as first argument to callback)
 function proto.processPacket(bin, callback)
+    logger.trace('>> processPacket')
+    proto.collectOldSessions()
     local packetCode = utils.binToDec({unpack(bin, 1, 3)})
-    print('debug >> packet code: ' .. packetCode)
+    logger.debug('packet code: ' .. packetCode)
 
-    packetProcessors = switch({
+    packetProcessors = utils.switch({
         [packet.PACKETS_ID.START_TRANSFER] = function()
-            print('debug >> proto.lua:start packet > received start packet')
+            logger.debug('start packet identified')
             local startPacket = packet.StartTransferPacket.unpack(bin)
             local sessionId = startPacket.sessionId
 
             if sessions[sessionId] ~= nil then
                 sessions[sessionId] = nil
-                error('session collision')
+                logger.warn(('session collision: session %d was removed'):format(sessionId))
+                return
             end
 
             sessions[sessionId] = Session()
-            print('debug >> proto.lua:start packet > created new session ' .. sessionId)
-            print('debug >> proto.lua:start packet > sessions list:\n' .. inspect(sessions))
+            logger.debug('created new session ' .. sessionId)
         end,
         [packet.PACKETS_ID.DATA] = function()
-            print('debug >> proto.lua:data packet > received data packet')
-            -- TODO: pcall
-            local dataPacket = packet.DataPacket.unpack(bin)
-            local sessionId = dataPacket.sessionId
+            logger.debug('data packet identified')
+            local result, returned = pcall(packet.DataPacket.unpack, bin)
+            if not result then
+                logger.warn('failed to unpack:\n' .. returned)
+                return
+            end
+            local sessionId = returned.sessionId
 
             local sess = sessions[sessionId]
             if sess ~= nil then
-                sess:appendData(dataPacket.data)
+                sess:appendData(returned.data)
             else
-                -- TODO: remove this
-                print('debug >> proto.lua:data packet > sessions list:\n' .. inspect(sessions))
-                print('debug >> proto.lua:data packet > cannot found session for data packet ' .. sessionId)
+                logger.warn('cannot found session for data packet: ' .. sessionId)
+                logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
         end,
         [packet.PACKETS_ID.HANDLER_ID] = function()
-            print('debug >> proto.lua:handler id packet > received handler id packet')
-            local handlerIdPacket = packet.HandlerIdPacket.unpack(bin)
-            local sessionId = handlerIdPacket.sessionId
-            
+            logger.debug('handler id packet identified')
+            local result, returned = pcall(packet.HandlerIdPacket.unpack, bin)
+            if not result then
+                logger.warn('failed to unpack:\n' .. returned)
+                return
+            end
+            local sessionId = returned.sessionId
+
             local sess = sessions[sessionId]
             if sess ~= nil then
-                sess:appendHandlerId(handlerIdPacket.handlerId)
+                sess:appendHandlerId(returned.handlerId)
             else
-                -- TODO: remove this
-                print('debug >> proto.lua:hanlder id packet > cannot found session for handler id packet')
+                logger.warn('cannot found session for handler id packet: ' .. sessionId)
+                logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
         end,
         [packet.PACKETS_ID.STOP_TRANSFER] = function()
-            print('debug >> proto.lua:stop packet > received stop packet')
+            logger.debug('stop packet identified')
             local stopTransferPacket = packet.StopTransferPacket.unpack(bin)
             local sessionId = stopTransferPacket.sessionId
 
             local sess = sessions[sessionId]
             if sess ~= nil then
-                if sess:isValid() then
-                    sessions[sessionId] = nil
-                    callback(sess)
-                end
+                sessions[sessionId] = nil
+                logger.debug(('removed session %d because stop packet received'):format(sessionId))
+                callback(sess)
             else
-                -- TODO: remove this and join 2 ifs above
-                print('debug >> proto.lua:stop packet > cannot found session for stop transfer packet')
+                logger.warn('cannot found session for stop transfer packet: ' .. sessionId)
+                logger.warn('sessions list:\n  ' .. inspect(sessions))
             end
         end,
-        default = function() print('received unknown packet') end
+        default = function() logger.warn('cannot identify packet') end
     })
 
     packetProcessors:case(packetCode)
@@ -86,7 +101,7 @@ end
 
 -- Args:
 --    data <table> - table of decimal numbers
---    handlerId <table> - encoded handlerId
+--    handlerId <table> - encoded handler id
 -- Returns:
 --    Table of binary sequences
 function proto.sendData(data, handlerId)
@@ -100,21 +115,23 @@ function proto.sendData(data, handlerId)
     for _, dataPart in ipairs(data) do
         packets[#packets + 1] = packet.DataPacket(dataPart, sessionId):pack()
     end
-    
+
     packets[#packets + 1] = packet.StopTransferPacket(sessionId):pack()
-    
+
     return packets
+end
+
+function proto.collectOldSessions()
+    for sessionId, sess in pairs(sessions) do
+        if os.time() - sess.lastUpdate > 30 then
+            sessions[sessionId] = nil
+            logger.debug('collected old session ' .. sessionId)
+        end
+    end
 end
 
 function proto.getSessions()
     return sessions
-end
-
--- TODO: remove
-function proto.identifyPacket(packetCode)
-    for name, code in pairs(packet.PACKETS_ID) do
-        if code == packetCode then return name end
-    end
 end
 
 return proto

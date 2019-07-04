@@ -1,3 +1,9 @@
+-- This file is part of broadcaster library
+-- Licensed under MIT License
+-- Copyright (c) 2019 Ranx
+-- https://github.com/r4nx/broadcaster
+-- Version 0.0.1
+
 local utils = {}
 
 -- Convert table of binary values to decimal number
@@ -48,7 +54,19 @@ function utils.tablesConcat(t1, ...)
 end
 
 -- Args:
+--    t <table> - key-value table
+-- Returns:
+--    number
+function utils.tableLength(t)
+    local count = 0
+    for _ in pairs(t) do count = count + 1 end
+    return count
+end
+
+-- Args:
 --    dec <number>
+-- Returns:
+--    bool
 function utils.getParity(n)
     local parity = false
     while n > 0 do
@@ -58,10 +76,12 @@ function utils.getParity(n)
     return parity
 end
 
--- Pads binary sequence with leading zeros, also trim it if it is too big
+-- Pads binary sequence with leading zeros, also trim it if it is too long
 -- Args:
 --    bin <table> - binary sequence
 --    bits <number> - padding (negative padding - pad with ending zeros)
+-- Returns:
+--    Binary sequence
 function utils.padBinary(bin, bits)
     local padded = bin
     if #padded > math.abs(bits) then
@@ -83,7 +103,7 @@ function utils.padBinary(bin, bits)
     return padded
 end
 
-function switch(t)
+function utils.switch(t)
     t.case = function(self, x)
         local f = self[x] or self.default
         if f then

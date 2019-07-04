@@ -1,7 +1,15 @@
+-- This file is part of broadcaster library
+-- Licensed under MIT License
+-- Copyright (c) 2019 Ranx
+-- https://github.com/r4nx/broadcaster
+-- Version 0.0.1
+
 local packet = {}
 
-local inspect = require 'inspect'
 local utils = require 'broadcaster.utils'
+
+local logger = require 'log'
+local inspect = require 'inspect'
 
 packet.PACKETS_ID = {
     START_TRANSFER = 1,
@@ -21,6 +29,8 @@ setmetatable(packet.StartTransferPacket, {
     end
 })
 
+-- Args:
+--    sessionId <number> (decimal)
 function packet.StartTransferPacket:_init(sessionId)
     self.sessionId = sessionId
 end
@@ -51,6 +61,8 @@ setmetatable(packet.StopTransferPacket, {
     end
 })
 
+-- Args:
+--    sessionId <number> (decimal)
 function packet.StopTransferPacket:_init(sessionId)
     self.sessionId = sessionId
 end
@@ -83,6 +95,7 @@ setmetatable(packet.DataPacket, {
 
 -- Args:
 --    data <number> - data to transfer (1 byte in decimal number system)
+--    sessionId <number> (decimal)
 function packet.DataPacket:_init(data, sessionId)
     if select(2, math.frexp(data)) > 8 then
         error('data is too large: only 1 byte allowed')
@@ -100,25 +113,22 @@ function packet.DataPacket:pack()
     return utils.padBinary(utils.tablesConcat(packetId, sessionId, parityBit, data), -16)
 end
 
--- Args:
---    bin <table> - binary sequence
 function packet.DataPacket.unpack(bin)
     local packetId = utils.binToDec({unpack(bin, 1, 3)})
-    print('debug >> packet.lua:data > packet id: ' .. packetId)
+    logger.debug('data packet > packet id: ' .. packetId)
     local sessionId = utils.binToDec({unpack(bin, 4, 7)})
-    print('debug >> packet.lua:data > session id: ' .. sessionId)
+    logger.debug('data packet > session id: ' .. sessionId)
     local parityBit = bin[8]
-    print('debug >> packet.lua:data > parity bit:' .. parityBit)
+    logger.debug('data packet > parity bit:' .. parityBit)
     local data = utils.binToDec({unpack(bin, 9, 16)})
-    print('debug >> packet.lua:data > data: ' .. inspect(data))
-    
-    -- TODO: pcall when calling unpack
+    logger.debug('data packet > data: ' .. inspect(data))
+
     if (utils.getParity(data) and 1 or 0) ~= parityBit then
-        print('got parity bit: ' .. parityBit)
-        print('actual parity bit: ' .. (utils.getParity(data) and 1 or 0))
-        error('corrupted packet: parity bits do not match')
+        logger.warn('got parity bit: ' .. parityBit)
+        logger.warn('actual parity bit: ' .. (utils.getParity(data) and 1 or 0))
+        error('corrupted data packet: parity bits do not match')
     end
-    
+
     return packet.DataPacket(data, sessionId)
 end
 
@@ -137,6 +147,7 @@ setmetatable(packet.HandlerIdPacket, {
 
 -- Args:
 --    handlerId <number> - handler id, decimal, 1 byte
+--    sessionId <number> (decimal)
 function packet.HandlerIdPacket:_init(handlerId, sessionId)
     if select(2, math.frexp(handlerId)) > 8 then
         error('handlerId is too large: only 1 byte allowed')
@@ -150,7 +161,7 @@ function packet.HandlerIdPacket:pack()
     local sessionId = utils.decToBin(self.sessionId, 4)
     local parityBit = {utils.getParity(self.handlerId) and 1 or 0}
     local handlerId = utils.decToBin(self.handlerId, 8)
-    
+
     return utils.padBinary(utils.tablesConcat(packetId, sessionId, parityBit, handlerId), -16)
 end
 
@@ -159,12 +170,13 @@ function packet.HandlerIdPacket.unpack(bin)
     local sessionId = utils.binToDec({unpack(bin, 4, 7)})
     local parityBit = bin[8]
     local handlerId = utils.binToDec({unpack(bin, 9, 16)})
-    
-    -- TODO: pcall when calling unpack
+
     if (utils.getParity(handlerId) and 1 or 0) ~= parityBit then
-        error('corrupted packet: parity bits do not match')
+        logger.warn('got parity bit: ' .. parityBit)
+        logger.warn('actual parity bit: ' .. (utils.getParity(handlerId) and 1 or 0))
+        error('corrupted handler id packet: parity bits do not match')
     end
-    
+
     return packet.HandlerIdPacket(handlerId, sessionId)
 end
 
