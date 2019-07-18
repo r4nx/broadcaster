@@ -2,7 +2,7 @@
 -- Licensed under MIT License
 -- Copyright (c) 2019 Ranx
 -- https://github.com/r4nx/broadcaster
--- Version 0.0.1
+-- Version 0.2.0
 
 local handlers = {}
 
@@ -35,7 +35,20 @@ function EXPORTS.registerHandler(handlerId, callback, rawData)
     end
 
     handlers[handlerId] = {callback, rawData}
-    logger.info(('Registered handler "%s"'):format(handlerId))
+    logger.info(('registered handler "%s"'):format(handlerId))
+end
+
+-- Args:
+--    handlerId <string> - handler id to unregister
+-- Returns:
+--    bool - true if unregistered successfully
+function EXPORTS.unregisterHandler(handlerId)
+    if handlers[handlerId] ~= nil then
+        handlers[handlerId] = nil
+        logger.info(('unregistered handler "%s"'):format(handlerId))
+        return true
+    end
+    return false
 end
 
 local function bitsToBitStream(bits)
