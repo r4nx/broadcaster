@@ -8,7 +8,7 @@ local handlers = {}
 
 local logger = require 'log'
 logger.usecolor = false
-logger.level = 'debug'
+logger.level = 'info'
 
 local proto = require 'broadcaster.proto'
 local utils = require 'broadcaster.utils'
@@ -83,6 +83,13 @@ function EXPORTS.sendMessage(message, handlerId)
         raknetBitStreamSetWriteOffset(bs, 16)
         raknetSendRpc(magic.RPC_OUT, bs)
         raknetDeleteBitStream(bs)
+    end
+end
+
+function EXPORTS.disableContentLengthLimit()
+    if magic.MAX_SESSION_CONTENT_LENGTH ~= math.huge then
+        magic.MAX_SESSION_CONTENT_LENGTH = math.huge
+        logger.info('Disable content length limit')
     end
 end
 
