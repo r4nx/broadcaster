@@ -104,7 +104,7 @@ end
 --    handlerId <table> - encoded handler id
 -- Returns:
 --    Table of binary sequences
-function proto.sendData(data, handlerId)
+function proto.packData(data, handlerId)
     local sessionId = randomSessionId()
     local packets = {packet.StartTransferPacket(sessionId):pack()}
 
@@ -119,6 +119,11 @@ function proto.sendData(data, handlerId)
     packets[#packets + 1] = packet.StopTransferPacket(sessionId):pack()
 
     return packets
+end
+
+function proto.sendData(...)
+    logger.warn('sendData function is depricated and will be removed, use packData instead')
+    return proto.packData(...)
 end
 
 function proto.collectOldSessions()

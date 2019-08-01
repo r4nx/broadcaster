@@ -76,7 +76,7 @@ function EXPORTS.sendMessage(message, handlerId)
     logger.debug('sendMessage > encodedMessage: ' .. inspect(encodedMessage))
     logger.debug('sendMessage > encodedHandlerId: ' .. inspect(encodedHandlerId))
 
-    local packets = proto.sendData(encodedMessage, encodedHandlerId)
+    local packets = proto.packData(encodedMessage, encodedHandlerId)
     logger.info('sendMessage > packets:\n  ' .. inspect(packets))
     for _, p in ipairs(packets) do
         local bs = bitsToBitStream(p)
