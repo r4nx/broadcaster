@@ -122,7 +122,7 @@ function proto.packData(data, handlerId)
 end
 
 function proto.sendData(...)
-    logger.warn('sendData function is depricated and will be removed, use packData instead')
+    logger.warn('sendData function is deprecated and will be removed, use packData instead')
     return proto.packData(...)
 end
 

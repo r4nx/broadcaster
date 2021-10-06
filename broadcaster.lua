@@ -89,7 +89,7 @@ end
 function EXPORTS.disableContentLengthLimit()
     if magic.MAX_SESSION_CONTENT_LENGTH ~= math.huge then
         magic.MAX_SESSION_CONTENT_LENGTH = math.huge
-        logger.info('Disable content length limit')
+        logger.info('Disabled content length limit')
     end
 end
 
