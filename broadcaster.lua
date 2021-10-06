@@ -2,13 +2,13 @@
 -- Licensed under MIT License
 -- Copyright (c) 2019 Ranx
 -- https://github.com/r4nx/broadcaster
--- Version 0.2.0
+-- Version 0.3.0
 
 local handlers = {}
 
 local logger = require 'log'
 logger.usecolor = false
-logger.level = 'debug'
+logger.level = 'info'
 
 local proto = require 'broadcaster.proto'
 local utils = require 'broadcaster.utils'
@@ -76,13 +76,20 @@ function EXPORTS.sendMessage(message, handlerId)
     logger.debug('sendMessage > encodedMessage: ' .. inspect(encodedMessage))
     logger.debug('sendMessage > encodedHandlerId: ' .. inspect(encodedHandlerId))
 
-    local packets = proto.sendData(encodedMessage, encodedHandlerId)
-    logger.info('sendMessage > packets:\n  ' .. inspect(packets))
+    local packets = proto.packData(encodedMessage, encodedHandlerId)
+    logger.debug('sendMessage > packets:\n  ' .. inspect(packets))
     for _, p in ipairs(packets) do
         local bs = bitsToBitStream(p)
         raknetBitStreamSetWriteOffset(bs, 16)
         raknetSendRpc(magic.RPC_OUT, bs)
         raknetDeleteBitStream(bs)
+    end
+end
+
+function EXPORTS.disableContentLengthLimit()
+    if magic.MAX_SESSION_CONTENT_LENGTH ~= math.huge then
+        magic.MAX_SESSION_CONTENT_LENGTH = math.huge
+        logger.info('Disabled content length limit')
     end
 end
 
@@ -126,7 +133,7 @@ local function rpcHandler(rpcId, bs)
         raknetBitStreamResetReadPointer(bs)
 
         local bits = bitStreamToBits(bs)
-        logger.info(string.rep(' ', 4) .. '[^] received bits: ' .. inspect(bits))
+        logger.debug(string.rep(' ', 4) .. '[^] received bits: ' .. inspect(bits))
 
         if #bits == magic.PACKETS_LEN then
             proto.processPacket(bits, sessionHandler)
