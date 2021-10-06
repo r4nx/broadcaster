@@ -2,7 +2,7 @@
 -- Licensed under MIT License
 -- Copyright (c) 2019 Ranx
 -- https://github.com/r4nx/broadcaster
--- Version 0.2.0
+-- Version 0.3.0
 
 local handlers = {}
 
@@ -77,7 +77,7 @@ function EXPORTS.sendMessage(message, handlerId)
     logger.debug('sendMessage > encodedHandlerId: ' .. inspect(encodedHandlerId))
 
     local packets = proto.packData(encodedMessage, encodedHandlerId)
-    logger.info('sendMessage > packets:\n  ' .. inspect(packets))
+    logger.debug('sendMessage > packets:\n  ' .. inspect(packets))
     for _, p in ipairs(packets) do
         local bs = bitsToBitStream(p)
         raknetBitStreamSetWriteOffset(bs, 16)
@@ -133,7 +133,7 @@ local function rpcHandler(rpcId, bs)
         raknetBitStreamResetReadPointer(bs)
 
         local bits = bitStreamToBits(bs)
-        logger.info(string.rep(' ', 4) .. '[^] received bits: ' .. inspect(bits))
+        logger.debug(string.rep(' ', 4) .. '[^] received bits: ' .. inspect(bits))
 
         if #bits == magic.PACKETS_LEN then
             proto.processPacket(bits, sessionHandler)
